@@ -1,0 +1,8 @@
+{
+  "name": "Liseuse Elmes",
+  "short_name": "Elmes",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F3ECD7",
+  "theme_color": "#8B7355"
+}
