@@ -21,8 +21,8 @@ jobs:
         run: flutter pub get
 
       - name: Build Web
-        # On utilise le rendu canvaskit pour de meilleures performances sur les liseuses
-        run: flutter build web --release --web-renderer canvaskit --base-href /${{ github.event.repository.name }}/
+        # Flutter stable récent : CanvasKit est le moteur web par défaut (--web-renderer a été retiré).
+        run: flutter build web --release --base-href /${{ github.event.repository.name }}/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
