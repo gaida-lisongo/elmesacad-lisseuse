@@ -18,23 +18,23 @@ class CategoryScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Catégorie')),
-      body: Consumer<SelectedCategoryNotifier>(
-        builder: (context, selected, _) {
-          final catId = selected.categoryId;
-          final cat = categories.firstWhere(
-            (c) => c.id == catId,
-            orElse: () => categories.first,
-          );
-          // Filtrer les documents par référence de catégorie (doc.categorieId contient la référence)
-          final docs = userProvider.documents
-              .where((doc) => doc.categorieId == cat.reference)
-              .toList();
+      body: categories.isEmpty
+          ? const Center(child: Text('Aucune catégorie disponible.'))
+          : Consumer<SelectedCategoryNotifier>(
+              builder: (context, selected, _) {
+                final catId = selected.categoryId;
+                final cat = categories.firstWhere(
+                  (c) => c.id == catId,
+                  orElse: () => categories.first,
+                );
+                // Utiliser les documents directement de la catégorie
+                final docs = cat.documents;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: ElmesCard(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -58,6 +58,61 @@ class CategoryScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElmesCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Non lus',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${docs.fold<int>(0, (sum, doc) => sum + doc.unreadPagesCount)} page(s)',
+                              style: TextStyle(
+                                color: AppColors.black.withOpacity(0.75),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElmesCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Lues',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${docs.fold<int>(0, (sum, doc) => sum + doc.readPagesCount)} page(s)',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               Expanded(
                 child: docs.isEmpty
                     ? const Center(
@@ -101,6 +156,14 @@ class CategoryScreen extends StatelessWidget {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${doc.readPagesCount}/${doc.totalPages} pages lues',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.black.withOpacity(0.55),
                                         ),
                                       ),
                                       const SizedBox(height: 4),

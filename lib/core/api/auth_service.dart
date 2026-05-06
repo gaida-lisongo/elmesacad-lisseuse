@@ -28,17 +28,12 @@ class AuthService {
         final data = jsonDecode(response.body);
         if (data is Map<String, dynamic>) {
           final userData = data['user'] as Map<String, dynamic>?;
-          final docsData = data['documents'] as List<dynamic>?;
           final catsData = data['categories'] as List<dynamic>?;
 
-          if (userData != null) {
+          if (userData != null && catsData != null) {
             final user = User.fromJson(userData);
-            final documents = docsData != null
-                ? docsData.map((json) => Document.fromJson(json as Map<String, dynamic>)).toList()
-                : <Document>[];
-            final categories = catsData != null
-                ? catsData.map((json) => Categorie.fromJson(json as Map<String, dynamic>)).toList()
-                : <Categorie>[];
+            final categories = catsData.map((json) => Categorie.fromJson(json as Map<String, dynamic>)).toList();
+            final documents = categories.expand((cat) => cat.documents).toList();
             return AuthResult(
               user: user,
               documents: documents,

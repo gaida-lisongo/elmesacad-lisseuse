@@ -45,6 +45,10 @@ class Document {
 
   List<DocumentPage> get pagesSorted =>
       List<DocumentPage>.from(pages)..sort((a, b) => a.index.compareTo(b.index));
+
+  int get readPagesCount => pages.where((page) => page.isRead).length;
+
+  int get unreadPagesCount => pages.length - readPagesCount;
 }
 
 @JsonSerializable(explicitToJson: true)

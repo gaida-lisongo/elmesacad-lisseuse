@@ -6,6 +6,7 @@ import '../../features/category/screens/category_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/main/widgets/secure_tab_shell.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import '../../features/reader/screens/document_reader_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/transactions/screens/transaction_screen.dart';
@@ -39,6 +40,10 @@ GoRouter createAppRouter() {
               GoRoute(
                 path: '/main/home',
                 builder: (context, state) => const HomeScreen(),
+              ),
+              GoRoute(
+                path: '/main/profile',
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),

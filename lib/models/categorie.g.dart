@@ -6,6 +6,9 @@ Categorie _$CategorieFromJson(Map<String, dynamic> json) => Categorie(
       designation: json['designation'] as String,
       tags:
           (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      documents: (json['documents'] as List<dynamic>)
+          .map((e) => Document.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$CategorieToJson(Categorie instance) => <String, dynamic>{
@@ -13,4 +16,5 @@ Map<String, dynamic> _$CategorieToJson(Categorie instance) => <String, dynamic>{
       'reference': instance.reference,
       'designation': instance.designation,
       'tags': instance.tags,
+      'documents': instance.documents.map((e) => e.toJson()).toList(),
     };
