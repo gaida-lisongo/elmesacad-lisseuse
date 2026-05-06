@@ -27,8 +27,13 @@ ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PAT
 RUN flutter doctor
 WORKDIR /app
 COPY . .
-# On compile en mode Release (beaucoup plus léger et rapide)
-RUN flutter build web --release --web-renderer canvaskit
+
+RUN flutter config --enable-web
+RUN flutter pub get
+
+# On compile sans l'option --web-renderer pour laisser Flutter choisir le meilleur par défaut 
+# (ou on utilise la syntaxe corrigée)
+RUN flutter build web --release
 
 # Étape 2 : Serveur léger
 FROM python:3.9-slim
