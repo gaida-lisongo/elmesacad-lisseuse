@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'app/router/app_router.dart';
+import 'bootstrap/url_strategy_stub.dart'
+    if (dart.library.html) 'bootstrap/url_strategy_web.dart';
 import 'core/theme/app_theme.dart';
 import 'features/category/providers/selected_category_provider.dart';
 import 'features/reader/providers/reading_progress_provider.dart';
@@ -10,6 +12,7 @@ import 'features/user/providers/user_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  configureUrlStrategyForWeb();
   runApp(LiseuseApp(router: createAppRouter()));
 }
 

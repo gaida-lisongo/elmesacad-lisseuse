@@ -1,3 +1,13 @@
+# Déploiement sur GitHub Pages (branche gh-pages).
+#
+# Réglages dépôt obligatoires : Settings → Pages → Build and deployment
+#   Source : « Deploy from a branch » (PAS « GitHub Actions » seul si vous utilisez peaceiris)
+#   Branch : gh-pages  /  Folder : / (root)
+#
+# URL du site (projet) : https://<owner>.github.io/<nom-du-repo>/
+#   (ex. https://gaida-lisongo.github.io/elmesacad-lisseuse/ )
+# Ne pas ouvrir https://<owner>.github.io/ seul : ce n’est pas ce dépôt.
+
 name: Deploy Flutter Web to GitHub Pages
 
 on:
@@ -25,8 +35,15 @@ jobs:
         run: flutter pub get
 
       - name: Build Web
-        # Flutter stable récent : CanvasKit est le moteur web par défaut (--web-renderer a été retiré).
+        # base-href = chemin du site projet sur GitHub Pages (doit correspondre au nom du dépôt).
         run: flutter build web --release --base-href /${{ github.event.repository.name }}/
+
+      # GitHub Pages sert 404.html pour chemins inconnus : copie = même SPA (routes client).
+      - name: Copy index.html to 404.html (SPA fallback)
+        run: cp build/web/index.html build/web/404.html
+
+      - name: List build output (debug)
+        run: ls -la build/web | head -30
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
