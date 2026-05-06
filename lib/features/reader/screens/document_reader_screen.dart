@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/api/reader_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
-import '../../../mocks/mock_repository.dart';
 import '../../../models/document.dart';
-import '../providers/reading_progress_provider.dart';
 import '../../user/providers/user_provider.dart';
 
 class DocumentReaderScreen extends StatefulWidget {
@@ -26,19 +25,21 @@ class _DocumentReaderScreenState extends State<DocumentReaderScreen> {
   int _index = 0;
   bool _chromeVisible = true;
   int? _previousPageForBilling;
+  bool _isSyncing = false;
+  final ReaderService _readerService = ReaderService();
 
   @override
   void initState() {
     super.initState();
-    _document = MockRepository.documentById(widget.documentId);
+    // Charger le document depuis UserProvider
+    final userProvider = context.read<UserProvider>();
+    _document = userProvider.documents
+        .where((doc) => doc.id == widget.documentId)
+        .firstOrNull;
     _pages = _document?.pagesSorted ?? const [];
-    final saved = context.read<ReadingProgressNotifier>().lastPageIndexFor(
-          widget.documentId,
-        );
-    final initial =
-        _pages.isEmpty ? 0 : saved.clamp(0, _pages.length - 1).toInt();
-    _index = initial;
-    _pageController = PageController(initialPage: initial);
+    // Initialiser à la page 0 (la progression sera chargée depuis le backend)
+    _index = 0;
+    _pageController = PageController(initialPage: _index);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       SystemChrome.setSystemUIOverlayStyle(
@@ -60,36 +61,75 @@ class _DocumentReaderScreenState extends State<DocumentReaderScreen> {
     super.dispose();
   }
 
-  void _onPageChanged(int i) {
-    if (_previousPageForBilling != null &&
-        _previousPageForBilling != i) {
-      context.read<UserProvider>().deductPageCredit();
+  Future<void> _onPageChanged(int i) async {
+    // Ne pas synchroniser si on est déjà en train de le faire
+    if (_isSyncing) return;
+    
+    final userProvider = context.read<UserProvider>();
+    final user = userProvider.user;
+    if (user == null) return;
+
+    // Synchroniser avec le backend
+    _isSyncing = true;
+    try {
+      final result = await _readerService.updateProgress(
+        documentId: widget.documentId,
+        userId: user.id,
+        newPage: i,
+      );
+      
+      if (result != null) {
+        // Mettre à jour les crédits depuis la réponse du backend
+        final creditsRemaining = result['credits_remaining'] as double?;
+        if (creditsRemaining != null) {
+          userProvider.setCredits(creditsRemaining);
+        }
+        
+        // Mettre à jour les pages lues depuis la réponse
+        final pagesData = result['pages'] as List<dynamic>?;
+        if (pagesData != null) {
+          final updatedPages = pagesData
+              .map((json) => DocumentPage.fromJson(json as Map<String, dynamic>))
+              .toList();
+          setState(() {
+            _pages = updatedPages;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error syncing progress: $e');
+      // En cas d'erreur, on met à jour localement
+      context.read<UserProvider>().setCredits(
+            user.credits - UserProvider.pageCreditCost,
+          );
+    } finally {
+      _isSyncing = false;
     }
-    _previousPageForBilling = i;
 
     setState(() => _index = i);
-    context.read<ReadingProgressNotifier>().setLastPageIndex(
-          widget.documentId,
-          i,
-        );
+    _previousPageForBilling = i;
   }
 
   void _toggleChrome() => setState(() => _chromeVisible = !_chromeVisible);
 
-  void _goToPage(int page) {
+  Future<void> _goToPage(int page) async {
     if (_pages.isEmpty) return;
     final clamped = page.clamp(0, _pages.length - 1).toInt();
     if (clamped == _index) return;
+    
     setState(() => _index = clamped);
-    _pageController.animateToPage(
+    await _pageController.animateToPage(
       clamped,
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
     );
-    context.read<ReadingProgressNotifier>().setLastPageIndex(
-          widget.documentId,
-          clamped,
-        );
+    
+    // Synchroniser avec le backend
+    final userProvider = context.read<UserProvider>();
+    final user = userProvider.user;
+    if (user == null) return;
+    
+    await _onPageChanged(clamped);
   }
 
   @override

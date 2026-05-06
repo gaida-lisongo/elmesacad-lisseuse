@@ -33,8 +33,9 @@ class Document {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  /// Présent côté app / mock pour grouper en bibliothèque (non requis par l'API d'origine).
-  @JsonKey(name: 'categorieId')
+  /// Présent côté app / mock pour grouper en bibliothèque.
+  /// Le backend renvoie le champ "categorie" (référence string).
+  @JsonKey(name: 'categorie')
   final String? categorieId;
 
   factory Document.fromJson(Map<String, dynamic> json) =>

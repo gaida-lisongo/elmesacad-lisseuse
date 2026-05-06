@@ -1,32 +1,42 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../mocks/mock_repository.dart';
-import '../../../models/user.dart';
+import '../../../models/models.dart';
 
-/// État utilisateur et solde crédits (Provider).
+/// État utilisateur, documents et catégories (Provider).
 class UserProvider extends ChangeNotifier {
-  UserProvider() : _user = MockRepository.mockUser;
+  UserProvider() : _user = null, _documents = [], _categories = [];
 
-  User _user;
+  User? _user;
+  List<Document> _documents;
+  List<Categorie> _categories;
 
-  User get user => _user;
+  User? get user => _user;
+  List<Document> get documents => _documents;
+  List<Categorie> get categories => _categories;
 
-  /// Débit par page lue (.cursorrules).
+  bool get isAuthenticated => _user != null;
+
+  /// Débit par page lue (doit correspondre à CREDITS_PER_PROGRESS_UPDATE du backend).
   static const double pageCreditCost = 1.15;
 
-  void replaceUser(User value) {
-    _user = value;
+  void setUserData(User user, List<Document> documents, List<Categorie> categories) {
+    _user = user;
+    _documents = documents;
+    _categories = categories;
     notifyListeners();
   }
 
-  /// Soustrait exactement [pageCreditCost] au solde à chaque appel.
-  void deductPageCredit() {
-    _user = _user.copyWith(credits: _user.credits - pageCreditCost);
+  void logout() {
+    _user = null;
+    _documents = [];
+    _categories = [];
     notifyListeners();
   }
 
+  /// Met à jour les crédits (appelé après sync backend).
   void setCredits(double credits) {
-    _user = _user.copyWith(credits: credits);
+    if (_user == null) return;
+    _user = _user!.copyWith(credits: credits);
     notifyListeners();
   }
 }
