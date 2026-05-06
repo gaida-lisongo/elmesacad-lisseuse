@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'https://didactic-telegram-r46v47xqvqgwhx64g-8000.app.github.dev';
+  static const String baseUrl = 'http://172.20.10.14:8000';
 
   static String get fullUrl => baseUrl;
 }
