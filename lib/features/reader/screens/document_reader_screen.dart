@@ -237,7 +237,7 @@ class _DocumentReaderScreenState extends State<DocumentReaderScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Text(
-                              '${userNotifier.user.credits.toStringAsFixed(2)} cr.',
+                              '${(userNotifier.user?.credits ?? 0).toStringAsFixed(2)} cr.',
                               style: const TextStyle(color: Colors.white70),
                             ),
                           );

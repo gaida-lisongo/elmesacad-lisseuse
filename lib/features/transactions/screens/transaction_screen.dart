@@ -14,7 +14,7 @@ class TransactionScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Transactions')),
       body: Consumer<UserProvider>(
         builder: (context, userNotifier, _) {
-          final list = userNotifier.user.recharges;
+          final list = userNotifier.user?.recharges ?? [];
           if (list.isEmpty) {
             return const Center(child: Text('Aucune recharge pour le moment.'));
           }
