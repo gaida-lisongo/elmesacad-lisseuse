@@ -1,52 +1,73 @@
-# Déploiement sur GitHub Pages (branche gh-pages).
+# Déploiement Flutter Web → GitHub Pages (méthode officielle : artefact + deploy-pages).
 #
-# Réglages dépôt obligatoires : Settings → Pages → Build and deployment
-#   Source : « Deploy from a branch » (PAS « GitHub Actions » seul si vous utilisez peaceiris)
-#   Branch : gh-pages  /  Folder : / (root)
+# APRÈS le premier déploiement réussi, configurez le dépôt UNE fois :
+#   Settings → Pages → Build and deployment → Source : « GitHub Actions »
+#   (pas « Deploy from a branch » si vous utilisez ce workflow.)
 #
-# URL du site (projet) : https://<owner>.github.io/<nom-du-repo>/
-#   (ex. https://gaida-lisongo.github.io/elmesacad-lisseuse/ )
-# Ne pas ouvrir https://<owner>.github.io/ seul : ce n’est pas ce dépôt.
+# URL du site (dépôt projet) :
+#   https://<owner>.github.io/<nom-du-repo>/
+# Exemple : https://gaida-lisongo.github.io/elmesacad-lisseuse/
+# N’ouvrez pas seulement https://<owner>.github.io/ — ce n’est pas la racine de ce projet.
 
 name: Deploy Flutter Web to GitHub Pages
 
 on:
   push:
     branches:
-      - main # Ou le nom de votre branche principale
+      - main
+  workflow_dispatch:
 
-# Requis pour pousser la branche gh-pages avec GITHUB_TOKEN (sinon 403 denied to github-actions[bot]).
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Flutter
+      - name: Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
 
-      - name: Install dependencies
+      - name: Dependencies
         run: flutter pub get
 
-      - name: Build Web
-        # base-href = chemin du site projet sur GitHub Pages (doit correspondre au nom du dépôt).
-        run: flutter build web --release --base-href /${{ github.event.repository.name }}/
+      - name: Build web
+        run: >
+          flutter build web --release
+          --base-href /${{ github.event.repository.name }}/
 
-      # GitHub Pages sert 404.html pour chemins inconnus : copie = même SPA (routes client).
-      - name: Copy index.html to 404.html (SPA fallback)
-        run: cp build/web/index.html build/web/404.html
+      - name: SPA fallback (404 = index)
+        run: |
+          cp build/web/index.html build/web/404.html
+          touch build/web/.nojekyll
 
-      - name: List build output (debug)
-        run: ls -la build/web | head -30
+      - name: Vérifier la sortie
+        run: |
+          test -f build/web/index.html || (echo "index.html manquant" && exit 1)
+          ls -la build/web | head -40
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
