@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// Dernière page lue par document (`documentId` → index de page affiché).
+/// Dernière page affichée par document (`documentId` → index).
 class ReadingProgressNotifier extends ChangeNotifier {
   final Map<String, int> _lastPageIndexByDocumentId = {};
 

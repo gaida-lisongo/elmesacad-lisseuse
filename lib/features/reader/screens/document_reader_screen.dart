@@ -1,77 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../models/document.dart';
-import '../providers/providers.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/widgets.dart';
+import '../../../mocks/mock_repository.dart';
+import '../../../models/document.dart';
+import '../providers/reading_progress_provider.dart';
+import '../../user/providers/user_provider.dart';
 
-class ReaderPage extends StatefulWidget {
-  const ReaderPage({super.key, required this.document});
+class DocumentReaderScreen extends StatefulWidget {
+  const DocumentReaderScreen({super.key, required this.documentId});
 
-  final Document document;
+  final String documentId;
 
   @override
-  State<ReaderPage> createState() => _ReaderPageState();
+  State<DocumentReaderScreen> createState() => _DocumentReaderScreenState();
 }
 
-class _ReaderPageState extends State<ReaderPage> {
+class _DocumentReaderScreenState extends State<DocumentReaderScreen> {
   late final PageController _pageController;
+  Document? _document;
   late List<DocumentPage> _pages;
   int _index = 0;
   bool _chromeVisible = true;
+  int? _previousPageForBilling;
 
   @override
   void initState() {
     super.initState();
-    _pages = widget.document.pagesSorted;
+    _document = MockRepository.documentById(widget.documentId);
+    _pages = _document?.pagesSorted ?? const [];
     final saved = context.read<ReadingProgressNotifier>().lastPageIndexFor(
-          widget.document.id,
+          widget.documentId,
         );
-    final initial = _pages.isEmpty
-        ? 0
-        : saved.clamp(0, _pages.length - 1).toInt();
+    final initial =
+        _pages.isEmpty ? 0 : saved.clamp(0, _pages.length - 1).toInt();
     _index = initial;
     _pageController = PageController(initialPage: initial);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _enterImmersive();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+      );
     });
-  }
-
-  void _enterImmersive() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-    );
-  }
-
-  void _restoreSystemUi() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   }
 
   @override
   void dispose() {
-    _restoreSystemUi();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle());
     _pageController.dispose();
     super.dispose();
   }
 
   void _onPageChanged(int i) {
+    if (_previousPageForBilling != null &&
+        _previousPageForBilling != i) {
+      context.read<UserProvider>().deductPageCredit();
+    }
+    _previousPageForBilling = i;
+
     setState(() => _index = i);
     context.read<ReadingProgressNotifier>().setLastPageIndex(
-          widget.document.id,
+          widget.documentId,
           i,
         );
   }
 
-  void _toggleChrome() {
-    setState(() => _chromeVisible = !_chromeVisible);
-  }
+  void _toggleChrome() => setState(() => _chromeVisible = !_chromeVisible);
 
   void _goToPage(int page) {
     if (_pages.isEmpty) return;
@@ -84,13 +87,34 @@ class _ReaderPageState extends State<ReaderPage> {
       curve: Curves.easeOutCubic,
     );
     context.read<ReadingProgressNotifier>().setLastPageIndex(
-          widget.document.id,
+          widget.documentId,
           clamped,
         );
   }
 
   @override
   Widget build(BuildContext context) {
+    final doc = _document;
+    if (doc == null || _pages.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Document')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Document introuvable.'),
+              const Spacer(),
+              ElmesButton(
+                label: 'Fermer',
+                onPressed: () => context.pop(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final theme = Theme.of(context);
     final maxIdx = (_pages.length - 1).clamp(0, 1 << 30).toInt();
 
@@ -121,7 +145,7 @@ class _ReaderPageState extends State<ReaderPage> {
                           height: 320,
                           child: Center(
                             child: CircularProgressIndicator(
-                              color: Color(0xFFCBB994),
+                              color: AppColors.primary,
                             ),
                           ),
                         );
@@ -139,7 +163,7 @@ class _ReaderPageState extends State<ReaderPage> {
                 );
               },
             ),
-            if (_chromeVisible && _pages.isNotEmpty)
+            if (_chromeVisible)
               Positioned(
                 top: 0,
                 left: 0,
@@ -151,10 +175,10 @@ class _ReaderPageState extends State<ReaderPage> {
                     child: ListTile(
                       leading: IconButton(
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => context.pop(),
                       ),
                       title: Text(
-                        widget.document.title,
+                        doc.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -168,12 +192,12 @@ class _ReaderPageState extends State<ReaderPage> {
                           color: Colors.white70,
                         ),
                       ),
-                      trailing: Consumer<UserNotifier>(
+                      trailing: Consumer<UserProvider>(
                         builder: (context, userNotifier, _) {
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Text(
-                              '${userNotifier.user.credits} crédits',
+                              '${userNotifier.user.credits.toStringAsFixed(2)} cr.',
                               style: const TextStyle(color: Colors.white70),
                             ),
                           );
@@ -183,7 +207,7 @@ class _ReaderPageState extends State<ReaderPage> {
                   ),
                 ),
               ),
-            if (_chromeVisible && _pages.isNotEmpty)
+            if (_chromeVisible)
               Positioned(
                 left: 0,
                 right: 0,
@@ -200,11 +224,12 @@ class _ReaderPageState extends State<ReaderPage> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                _pages[_index].comment,
-                                style: const TextStyle(color: Colors.white70),
+                              Expanded(
+                                child: Text(
+                                  _pages[_index].comment,
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
                               ),
-                              const Spacer(),
                               Text(
                                 '${_index + 1}',
                                 style: const TextStyle(
@@ -220,7 +245,7 @@ class _ReaderPageState extends State<ReaderPage> {
                             max: maxIdx.toDouble(),
                             divisions: maxIdx == 0 ? null : maxIdx,
                             label: '${_index + 1}',
-                            activeColor: const Color(0xFFCBB994),
+                            activeColor: AppColors.primary,
                             inactiveColor: Colors.white24,
                             onChanged: (v) => _goToPage(v.round()),
                           ),

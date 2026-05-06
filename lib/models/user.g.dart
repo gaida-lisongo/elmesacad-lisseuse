@@ -6,7 +6,7 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
       id: json['_id'] as String,
       matricule: json['matricule'] as String,
       mail: json['mail'] as String,
-      credits: (json['credits'] as num).toInt(),
+      credits: (json['credits'] as num).toDouble(),
       recharges: (json['recharges'] as List<dynamic>)
           .map((e) => Recharge.fromJson(e as Map<String, dynamic>))
           .toList(),

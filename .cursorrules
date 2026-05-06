@@ -1,0 +1,26 @@
+# ELMESACAD - Design System & Architecture Rules
+
+## Graphic Charter
+- Primary Color: #058AC5 (Main brand color)
+- Secondary Color: #E76067 (Accents and CTA)
+- Black: #272826 (Text and headings)
+- Gray: #D4D6D3 (Borders and disabled states)
+- White: #FFFFFF (Backgrounds)
+- Green: #5ECB44 (Success states)
+
+## UI Components Rules
+- Buttons: Rounded corners (12px), elevation 2. Primary for main actions, White with Gray border for secondary.
+- Inputs: OutlinedBorder, 1.5px thickness, color Gray, turns Primary on focus.
+- Cards: White background, subtle shadow (blurRadius: 10, color: Black with 0.05 opacity), borderRadius: 16.
+- Spacing: Use a 8px grid system (8, 16, 24, 32).
+
+## Business Logic
+- Credit System: Each page read (trigger: PageView change) MUST deduct 1.15 credits from `User.credits`.
+- Navigation: Use GoRouter or AutoRoute for handling PUSH and TAB navigation separately.
+
+## Architecture
+- Folder structure: 
+  - lib/core/theme (colors, typography)
+  - lib/core/widgets (reusable components)
+  - lib/features/[feature_name]/screens
+  - lib/features/[feature_name]/providers (Riverpod or Provider)

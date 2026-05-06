@@ -10,7 +10,7 @@ class MockRepository {
         id: 'usr_7f3c9a2b1e84d506',
         matricule: 'ELM-20488',
         mail: 'lecteur@elmes.example',
-        credits: 120,
+        credits: 120.0,
         recharges: [
           Recharge(
             id: 'rch_a001',
@@ -213,5 +213,12 @@ class MockRepository {
       }
     }
     return map;
+  }
+
+  static Document? documentById(String id) {
+    for (final d in mockDocuments) {
+      if (d.id == id) return d;
+    }
+    return null;
   }
 }

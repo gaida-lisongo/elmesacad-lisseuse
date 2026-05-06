@@ -17,7 +17,8 @@ class User {
   final String id;
   final String matricule;
   final String mail;
-  final int credits;
+  /// Solde décimal (ex. débit de 1.15 par page lue).
+  final double credits;
   final List<Recharge> recharges;
   final Metrics metrics;
 
@@ -29,7 +30,7 @@ class User {
     String? id,
     String? matricule,
     String? mail,
-    int? credits,
+    double? credits,
     List<Recharge>? recharges,
     Metrics? metrics,
   }) {

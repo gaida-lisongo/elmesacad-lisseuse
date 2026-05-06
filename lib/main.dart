@@ -1,36 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/providers.dart';
-import 'views/library_page.dart';
+import 'app/router/app_router.dart';
+import 'core/theme/app_theme.dart';
+import 'features/category/providers/selected_category_provider.dart';
+import 'features/reader/providers/reading_progress_provider.dart';
+import 'features/user/providers/user_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const LiseuseApp());
+  runApp(LiseuseApp(router: createAppRouter()));
 }
 
 class LiseuseApp extends StatelessWidget {
-  const LiseuseApp({super.key});
+  const LiseuseApp({super.key, required this.router});
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserNotifier()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ReadingProgressNotifier()),
+        ChangeNotifierProvider(create: (_) => SelectedCategoryNotifier()),
       ],
-      child: MaterialApp(
-        title: 'Liseuse Elmes',
+      child: MaterialApp.router(
+        title: 'ELMESACAD',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF8B7355),
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(centerTitle: false),
-        ),
-        home: const LibraryPage(),
+        theme: AppTheme.light,
+        routerConfig: router,
       ),
     );
   }
