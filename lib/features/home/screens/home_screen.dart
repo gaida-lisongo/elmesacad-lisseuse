@@ -91,6 +91,88 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
+                    // Liste des documents
+                    Text(
+                      'Mes Documents',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Consumer<UserProvider>(
+                      builder: (context, userProvider, _) {
+                        final documents = userProvider.documents;
+                        if (documents.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Text(
+                              'Aucun document disponible.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppColors.gray),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: documents.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final doc = documents[index];
+                            return ElmesCard(
+                              onTap: () => context.push('/reader/${doc.id}'),
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      doc.pagesSorted.first.url,
+                                      width: 56,
+                                      height: 72,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        width: 56,
+                                        height: 72,
+                                        color: AppColors.gray,
+                                        child: const Icon(Icons.menu_book_outlined),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          doc.title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          doc.author.name,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: AppColors.black.withOpacity(0.55),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.chevron_right_rounded),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     Text(
                       'Catégories',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(

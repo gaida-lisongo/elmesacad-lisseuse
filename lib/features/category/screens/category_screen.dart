@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/widgets.dart';
-import '../../../mocks/mock_repository.dart';
-import '../../../models/document.dart';
+import '../../../models/models.dart';
+import '../../user/providers/user_provider.dart';
 import '../providers/selected_category_provider.dart';
 
 class CategoryScreen extends StatelessWidget {
@@ -13,18 +13,22 @@ class CategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categories = MockRepository.mockCategories;
-    final byCat = MockRepository.documentsByCategoryId();
+    final userProvider = context.watch<UserProvider>();
+    final categories = userProvider.categories;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Catégorie')),
       body: Consumer<SelectedCategoryNotifier>(
         builder: (context, selected, _) {
+          final catId = selected.categoryId;
           final cat = categories.firstWhere(
-            (c) => c.id == selected.categoryId,
+            (c) => c.id == catId,
             orElse: () => categories.first,
           );
-          final docs = byCat[cat.id] ?? const <Document>[];
+          // Filtrer les documents par référence de catégorie (doc.categorieId contient la référence)
+          final docs = userProvider.documents
+              .where((doc) => doc.categorieId == cat.reference)
+              .toList();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
