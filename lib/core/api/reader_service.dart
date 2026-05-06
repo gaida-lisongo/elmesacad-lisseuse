@@ -15,9 +15,9 @@ class ReaderService {
         Uri.parse('${ApiConfig.fullUrl}/reader/update-progress'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'document_id': documentId,
-          'user_id': userId,
-          'new_page': newPage,
+          'documentId': documentId,
+          'userId': userId,
+          'newPage': newPage,
         }),
       );
 
